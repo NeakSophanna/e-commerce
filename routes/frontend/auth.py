@@ -131,18 +131,18 @@ def send_reset_otp():
     session['otp'] = otp
     session['email'] = email
     session['otp_expiry'] = (datetime.utcnow() + timedelta(minutes=5)).timestamp()
-    msg = Message(
-        subject='Email Verification - Pav E-Commerce',
-        sender=current_app.config.get('MAIL_USERNAME'),
-        recipients=[email]
+    response = send_mail(
+        email,
+        "Verify your email",
+        otp
     )
-    msg.html = render_template("otp_email.html",otp=otp)
-    try:
-        mail.send(msg)
-        return jsonify({'message': 'Verification code sent successfully'})
-    except Exception as e:
-        current_app.logger.error(f"Mail send error: {e}")
-        return jsonify({'message': f'Failed to send email: {str(e)}'}), 500
+    if response.status_code == 201:
+        return jsonify({"message": "OTP sent successfully", "otp": otp}), 200
+    else:
+        return jsonify({
+            "error": "Failed to send OTP",
+            "details": response.text
+        }), 500
 
 @cust_bp.post("/verify-otp")
 def verify_otp():
