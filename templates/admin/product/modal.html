@@ -1,0 +1,81 @@
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title fs-5" >Add Product</h4>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input 
+                            type="text"
+                            class="form-control" 
+                            id="name"
+                            placeholder="Enter product name"
+                            v-model="form.name">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea
+                                class="form-control"
+                                id="description"
+                                placeholder="Enter description"
+                                v-model="form.description">
+                    </textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="cost" class="form-label">Cost</label>
+                    <input
+                            type="number"
+                            class="form-control"
+                            id="cost"
+                            placeholder="Enter product cost"
+                            v-model="form.cost">
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price</label>
+                    <input
+                            type="number"
+                            class="form-control"
+                            id="price"
+                            placeholder="Enter product price"
+                            v-model="form.price">
+                </div>
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-control" id="category" name="category" v-model="form.category_id">
+                        <option value="" disabled>Select category</option>
+                        <option :value="category.category_id" v-for="category in category_list" :key="category.category_id">[[category.category_name]]</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="stock" class="form-label">Stock</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="stock"
+                            placeholder="Enter product stock"
+                            v-model="form.stock">
+                </div>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Image</label>
+                    <input
+                            class="form-control"
+                            id="image"
+                            placeholder="Choose image"
+                            type="file"
+                            ref="fileInput"
+                            @change="onFileChange"
+                            accept="image/*"
+                    >
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click="close_popup()">Close</button>
+                <button type="button" class="btn btn-primary" @click="crud()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

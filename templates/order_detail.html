@@ -1,0 +1,72 @@
+<!-- Compact Order Detail Modal -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+
+      <!-- Header -->
+      <div class="modal-header text-white py-3" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+        <h5 class="modal-title fw-semibold" id="orderDetailLabel">
+          <i class="bi bi-bag-check me-2"></i> Order Details
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4">
+        <!-- Order Summary -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Customer:</strong> <span id="detailCustomer">[[order_details.customer_name]]</span></p>
+            <p class="mb-1"><strong>Payment:</strong> <span id="detailPayment">[[order_details.payment_method]]</span></p>
+            <p class="mb-0"><strong>Status:</strong>&nbsp;
+                <span
+                        id="detailStatus"
+                        class="badge rounded-pill"
+                        :class="{
+                                'bg-warning text-white': order_details.status === 'Pending',
+                                'bg-success text-white': order_details.status === 'Complete',
+                                'bg-danger text-white': order_details.status === 'Canceled'
+                            }"
+                >
+                     [[order_details.status]]
+                </span>
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p class="mb-1"><strong>Total:</strong> $<span id="detailTotal">[[order_details.total]]</span></p>
+            <p class="mb-1"><strong>Date:</strong> <span id="detailDate">[[order_details.order_at]]</span></p>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive rounded-3 border shadow-sm">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="orderItemsTable">
+              <tr v-for="(item,index) in order_details.items" :key="'order -'+index">
+                <td>[[index+1]]</td>
+                <td>[[item.product_name]]</td>
+                <td class="text-center">[[item.quantity]]</td>
+                <td class="text-end">$[[item.price]]</td>
+                <td class="text-end fw-semibold">$[[item.price * item.quantity]]</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer bg-light border-0 py-3">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

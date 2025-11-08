@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pav E-Commerce{% endblock %}</title>
+
+</head>
+    {%include"style.html"%}
+<body>
+    <div id="app">
+        <div class="container mt-4 mb-3">
+            {%include "navbar.html"%}
+        </div>
+            
+        <div class="container my-4">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    {% block script %}{%include"script.html"%}{% endblock %}
+
+
+</body>
+</html>

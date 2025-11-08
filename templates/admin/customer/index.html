@@ -1,0 +1,300 @@
+{% extends "/admin/master.html" %}
+
+{%block style%}
+    <link rel="stylesheet" href="{{url_for('static', filename='admin/style/style.css')}}">
+{%endblock%}
+
+{%block content%}
+
+  <div class="content-wrapper" id="app">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Customers</h1>
+
+          </div><!-- /.col -->
+        
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+    <button type="button" class="btn btn-primary mb-3"  @click="open_popup('create')"><i class="bi bi-plus-circle"></i> Register Customer</button>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0 shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            <thead>
+            <tr>
+                <th scope="col" class="ps-4">No</th>
+                <th scope="col" class="ps-4">Profile</th>
+                <th scope="col" class="ps-4">Username</th>
+                <th scope="col" class="ps-4">Email</th>
+                <th scope="col" class="ps-4">Password</th>
+                <th scope="col" class="ps-4">Register Date</th>
+                <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr class="table-row" v-for="(item,index) in customer_list" :key="'customer -'+index" v-if="customer_list.length>0">
+                    <td class="ps-4 fw-semibold">[[index +1]]</td>
+                    <td class="ps-4 fw-semibold">
+                        <img
+                                v-if="item.profile"
+                                :src="'{{ url_for('static', filename='image/customer/') }}'+item.profile"
+                                class="img-fluid rounded"
+                                style="height: 50px; width: auto; object-fit: cover;"
+                                onerror="this.src='{{ url_for('static', filename='image/no-image.png') }}'">
+                        <span v-else>No Image</span>
+                    </td>
+                    <td class="ps-4">[[item.username]]</td>
+                    <td class="ps-4">[[item.email]]</td>
+                    <td class="pe-4">********</td>
+                    <td class="pe-4">[[item.registered_date]]</td>
+                    <td class="text-end pe-4">
+                        <button 
+                                class="btn btn-light btn-sm me-1 border mr-2" 
+                                @click="edit_customer(item)">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button 
+                                class="btn btn-light btn-sm border"
+                                @click="delete_customer(item.id,item.profile)">
+                            <i class="bi bi-trash text-danger"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="8" class="text-center fst-italic text-muted py-3">
+                        Customer is empty!
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+      </section>
+    <!-- /.content -->
+     {% include "/admin/customer/modal.html" %}
+  </div>
+
+{%endblock%}
+
+{%block script%}
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data(){
+                return{
+                    customer_list: [],
+                    form:{
+                        id:null,
+                        username:null,
+                        email:null,
+                        password:null,
+                        profile:null,
+                        old_profile:null
+                    },
+                    request_method:null
+                }
+            },
+            mounted(){
+                this.fetchData()
+            },
+            methods:{
+                onFileChange(e){
+                    this.form.profile = e.target.files[0] || null;
+                },
+                open_popup(request_method) {
+                    this.form.id=null
+                    this.form.username=null
+                    this.form.email=null
+                    this.form.password=null
+
+                    //Clear Input File Type
+                    this.$refs.fileInput.value = null
+                    this.form.profile = null
+                    myModal = new bootstrap.Modal(document.getElementById('myModal'));
+                    myModal.show();
+                    this.request_method = request_method;
+                },
+                close_popup() {
+                    myModal.hide()
+                },
+                crud(){
+                    if(!this.form.username||!this.form.email){
+                        return
+                    }
+                    if(this.request_method=='create'){
+                        if(!this.form.password)
+                            return
+                        this.addCustomer();
+                    }else{
+                        this.update_customer();
+                    }
+                },
+                edit_customer(item){
+                    this.open_popup('update')
+                    this.form.id=item.id
+                    this.form.username=item.username
+                    this.form.email=item.email
+                    this.form.password=item.password
+                    this.form.old_profile=item.profile
+                },
+                delete_customer(id,image_url){
+                    let vm = this
+                    let payload = {
+                        customer_id : id,
+                        profile : image_url
+                    }
+                    Swal.fire({
+                        title: "Are you sure?",
+                        text: "You won't be able to revert this!",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#3085d6",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Yes, delete it!"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $("#app").LoadingOverlay("show", {
+                                background  : "#fff"
+                            });
+                            axios.post(
+                                '/admin/customer/delete',
+                                payload,{ withCredentials: true }
+                            ).then(function(response){
+                                $("#app").LoadingOverlay("hide", true);
+                                vm.fetchData()
+                                Swal.fire({
+                                    position: "top-end",
+                                    icon: "success",
+                                    title: "Customer Deleted!",
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                });
+
+                            }).catch(function (error) {
+                                $("#app").LoadingOverlay("hide", true);
+                                vm.fetchData()
+                                Swal.fire({
+                                      icon: "error",
+                                      title: "Oops...",
+                                      text: error.response.data.message
+                                });
+                            })
+                        }
+                    })
+                },
+                fetchData(){
+                    let vm = this
+                    axios.get('/admin/customer/list')
+                    .then(function (response) {
+                        $("#app").LoadingOverlay("show", {
+                            background  : "#fff"
+                        });
+                        vm.customer_list = response.data.customers;
+                        $("#app").LoadingOverlay("hide", true);
+                    })
+                    .catch(function (error) {
+                        // handle error
+                        console.log(error);
+                    })
+                },
+                addCustomer(){
+                    let vm = this
+                    let payload = new FormData();
+                    payload.append("username",this.form.username);
+                    payload.append("email",this.form.email);
+                    payload.append("password",this.form.password);
+                    payload.append("profile",this.form.profile);
+                    $("#app").LoadingOverlay("show", {
+                        background  : "#fff"
+                    });
+                    $("#app").LoadingOverlay("show");
+                    axios.post(
+                        '/admin/customer/add',
+                        payload,
+                        {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            },
+                             withCredentials: true
+                        },
+                    ).then(function(response){
+
+                        if(response.status==201){
+                            $("#app").LoadingOverlay("hide", true);
+                            vm.fetchData()
+                            vm.close_popup()
+                            Swal.fire({
+                                position: "top-end",
+                                icon: "success",
+                                title: "Customer added",
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                        }
+                    }).catch(function (error) {
+                        $("#app").LoadingOverlay("hide", true);
+                        Swal.fire({
+                              icon: "error",
+                              title: "Oops...",
+                              text: error.response.data.message
+                        });
+                    })
+                },
+                update_customer(){
+                    let vm = this
+                    let payload = new FormData();
+                    payload.append("id",this.form.id);
+                    payload.append("username",this.form.username);
+                    payload.append("email",this.form.email);
+                    payload.append("password",this.form.password);
+                    payload.append("profile",this.form.profile);
+                    payload.append("old_profile",this.form.old_profile);
+
+                    $("#app").LoadingOverlay("show", {
+                        background  : "#fff"
+                    });
+                    $("#app").LoadingOverlay("show");
+                    axios.post(
+                        '/admin/customer/update',
+                        payload,
+                        {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            },
+                            withCredentials: true
+                        }
+                    ).then(function(response){
+                        $("#app").LoadingOverlay("hide", true);
+                        Swal.fire({
+                                position: "top-end",
+                                icon: "success",
+                                title: "Customer Updated",
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                        vm.fetchData()
+                        vm.close_popup()
+                    }).catch(function (error) {
+                        $("#app").LoadingOverlay("hide", true);
+                        Swal.fire({
+                              icon: "error",
+                              title: "Oops...",
+                              text: error.response.data.message
+                        });
+                    })
+                }
+
+            }
+            
+        }).mount('#app')
+    </script>
+{%endblock%}

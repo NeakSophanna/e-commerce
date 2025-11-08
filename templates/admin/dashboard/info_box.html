@@ -1,0 +1,35 @@
+<div class="col-md-4">
+    <div class="info-box mb-3 bg-success">
+        <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+
+        <div class="info-box-content">
+            <span class="info-box-text">Total Revenue</span>
+            <span class="info-box-number">$[[item_list.total_revenue ? item_list.total_revenue.toFixed(2) : '0.00']]</span>
+        </div>
+    </div>
+
+    <div class="info-box mb-3 bg-warning">
+        <span class="info-box-icon"><i class="ion ion-bag"></i></span>
+        <div class="info-box-content">
+            <span class="info-box-text">Total Orders</span>
+            <span class="info-box-number">[[item_list.total_order]]</span>
+        </div>
+    </div>
+
+
+    <div class="info-box mb-3 bg-danger">
+        <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        <div class="info-box-content">
+            <span class="info-box-text">Low Stock Products</span>
+            <span class="info-box-number">[[item_list.low_stock_product]]</span>
+        </div>
+    </div>
+
+    <div class="info-box mb-3 bg-info">
+        <span class="info-box-icon"><i class="fas fa-users"></i></span>
+        <div class="info-box-content">
+            <span class="info-box-text">New Customers This Month</span>
+            <span class="info-box-number">[[item_list.new_customer_this_month]]</span>
+        </div>
+    </div>
+</div>

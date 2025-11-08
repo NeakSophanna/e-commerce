@@ -1,0 +1,134 @@
+{% extends "/admin/master.html" %}
+
+{%block style%}
+    <link rel="stylesheet" href="{{url_for('static', filename='admin/style/style.css')}}">
+{%endblock%}
+
+{%block content%}
+
+  <div class="content-wrapper" id="app">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Order Management</h1>
+
+          </div><!-- /.col -->
+        
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0 shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            <thead>
+            <tr>
+                <th scope="col" class="ps-4">No</th>
+                <th scope="col" class="ps-4">Customer</th>
+                <th scope="col" class="ps-4">Total</th>
+                <th scope="col" class="ps-4">Payment</th>
+                <th scope="col" class="ps-4">Status</th>
+                <th scope="col" class="pe-4 ">Date</th>
+                <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr class="table-row" v-for="(item,index) in order_list" :key="'order -'+index" v-if="order_list.length>0">
+                    <td class="ps-4 fw-semibold">[[index +1]]</td>
+                    <td class="ps-4">[[item.customer_name]]</td>
+                    <td class="ps-4">$[[item.total.toFixed(2)]]</td>
+                    <td class="pe-4">[[item.payment_method]]</td>
+                    <td class="ps-4">
+                        <span
+                            class="badge px-3 py-2 rounded-pill fs-7"
+                            :class="{
+                                'bg-warning text-white': item.status === 'Pending',
+                                'bg-success text-white': item.status === 'Complete',
+                                'bg-danger text-white': item.status === 'Canceled'
+                            }">
+                        [[item.status]]
+                        </span>
+                    </td>
+                    <td class="pe-4 text-end">[[item.order_at]]</td>
+                    <td class="text-end pe-4">
+                        <button @click="order_detail_list(item.id)" class="btn-view">
+                            <i class="bi bi-eye"></i>
+                            View
+                        </button>
+                    </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="8" class="text-center fst-italic text-muted py-3">
+                        Order is empty!
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+      </section>
+      {% include "/admin/order/modal.html" %}
+  </div>
+
+{%endblock%}
+
+{%block script%}
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data(){
+                return{
+                    order_list:[],
+                    order_detail:{}
+                }
+            },
+            mounted(){
+                this.fetchData()
+            },
+            methods:{
+                fetchData(){
+                    let vm = this
+                    axios.get('/admin/order/list')
+                    .then(function (response) {
+                        $("#app").LoadingOverlay("show", {
+                            background  : "#fff"
+                        });
+                        vm.order_list = response.data.orders;
+                        $("#app").LoadingOverlay("hide", true);
+                    })
+                    .catch(function (error) {
+                        // handle error
+                        console.log(error);
+                    })
+                },
+                order_detail_list(id){
+                    this.order_detail={}
+                    myModal = new bootstrap.Modal(document.getElementById('myModal'))
+                    myModal.show()
+                    axios.get(
+                        `/admin/order/${id}`,
+                        { withCredentials: true }
+                    ).then(res => this.order_detail = res.data)
+                    .catch(err =>
+                                    Swal.fire({
+                                          icon: "error",
+                                          title: "Oops...",
+                                          text: error.response.data.message
+                                    })
+                    )
+                },
+                close_popup() {
+                    myModal.hide()
+                },
+            }
+            
+        }).mount('#app')
+    </script>
+{%endblock%}

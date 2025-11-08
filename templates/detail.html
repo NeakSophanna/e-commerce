@@ -1,0 +1,45 @@
+{% extends "master.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="row g-5">
+
+    <!-- Product Image -->
+    <div class="col-md-6">
+      <img
+              src="{{url_for('static',filename='image/product/'+product.image)}}"
+              alt="Product"
+              class="img-fluid rounded shadow-sm"
+              onerror="{{url_for('static',filename='image/no-image.png')}}">
+    </div>
+
+    <!-- Product Details -->
+    <div class="col-md-6">
+      <h2 class="fw-bold mb-3">{{product.name}}</h2>
+      <p class="text-muted">Category: {{product.category_name}}</p>
+
+      <h4 class="text-danger fw-bold mb-4">${{ '%.2f'|format(product.price) }}</h4>
+
+      <p class="text-secondary mb-4">
+        {{product.description}}
+      </p>
+
+
+
+      <!-- Additional Info -->
+      <ul class="list-unstyled text-secondary small">
+        <li><i class="bi bi-truck me-2"></i> Free shipping worldwide</li>
+        <li><i class="bi bi-shield-check me-2"></i> 2-year warranty</li>
+        <li><i class="bi bi-arrow-counterclockwise me-2"></i> 30-day returns</li>
+      </ul>
+        <div class="position-relative d-inline-block">
+            <button @click="addToCart({{product}})" class="btn btn-cart-outline">
+                <i class="bi bi-cart-plus me-2"></i>Add To Cart
+            </button>
+
+          </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

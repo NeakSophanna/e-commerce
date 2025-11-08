@@ -1,0 +1,47 @@
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title fs-5" >Add Category</h4>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="category" class="form-label">Name</label>
+                    <input 
+                            type="text"
+                            class="form-control" 
+                            id="category" 
+                            placeholder="Enter category name" 
+                            v-model="form.name">
+                </div>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Image</label>
+                    <input
+                            class="form-control"
+                            id="image"
+                            placeholder="Choose image"
+                            type="file"
+                            ref="fileInput"
+                            @change="onFileChange"
+                            accept="image/*"
+                    >
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea 
+                                class="form-control" 
+                                id="description" 
+                                placeholder="Enter description" 
+                                v-model="form.description">
+                    </textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click="close_popup()">Close</button>
+                <button type="button" class="btn btn-primary" @click="crud()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+    .table {
+        background-color: #fff; /* clean contrast against dark page */
+    }
+    .table-responsive {
+        color: #000;
+    }
+    thead tr {
+        border-bottom: 2px solid #dee2e6; /* strong separator for header */
+    }
+    .table-row:hover {
+        background-color: #f8f9fa;
+        transition: 0.2s ease-in-out;
+    }
+    .table td, .table th {
+        border: none !important; /* remove Bootstrap defaults */
+    }
+    .table tbody tr {
+        border-bottom: 1px solid #e9ecef; /* clean row separator */
+    }
+    .table tbody tr:last-child {
+        border-bottom: none;
+    }
+    .btn-sm {
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+    .form-select{
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      appearance: none;
+    }
+    .form-select:focus {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-color: #0d6efd;
+      box-shadow: 0 0 5px #0d6efd;
+      color: #fff;
+    }
+    .btn-view {
+  background-color: #007bff; /* vivid blue */
+  border: none;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-view:hover {
+  background-color: #0069d9;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}

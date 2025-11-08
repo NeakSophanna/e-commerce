@@ -1,0 +1,56 @@
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title fs-5" >Register Customer</h4>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input 
+                            type="text"
+                            class="form-control"
+                            id="username"
+                            placeholder="Enter customer username"
+                            v-model="form.username">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input
+                            type="email"
+                            class="form-control"
+                            id="email"
+                            placeholder="Enter customer email"
+                            v-model="form.email">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="password"
+                            placeholder="Enter password"
+                            v-model="form.password">
+                </div>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Profile</label>
+                    <input
+                            class="form-control"
+                            id="image"
+                            placeholder="Choose image"
+                            type="file"
+                            ref="fileInput"
+                            @change="onFileChange"
+                            accept="image/*"
+                    >
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click="close_popup()">Close</button>
+                <button type="button" class="btn btn-primary" @click="crud()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,101 @@
+{% extends "/admin/master.html" %}
+
+{%block style%}
+    <link rel="stylesheet" href="{{url_for('static', filename='admin/style/style.css')}}">
+{%endblock%}
+
+{%block content%}
+
+  <div class="content-wrapper" id="app">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Order</h1>
+
+          </div><!-- /.col -->
+        
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+    <button type="button" class="btn btn-primary mb-3"  @click="open_popup('create')"><i class="bi bi-plus-circle"></i> Register User</button>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0 shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            <thead>
+            <tr>
+                <th scope="col" class="ps-4">No</th>
+                <th scope="col" class="ps-4">Customer</th>
+                <th scope="col" class="ps-4">Total</th>
+                <th scope="col" class="ps-4">Payment</th>
+                <th scope="col" class="ps-4">Status</th>
+                <th scope="col" class="ps-4">Date</th>
+                <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr class="table-row" v-for="(item,index) in order_list" :key="'order -'+index" v-if="order_list.length>0">
+                    <td class="ps-4 fw-semibold">[[index +1]]</td>
+                    <td class="ps-4">[[item.customer_name]]</td>
+                    <td class="ps-4">[[item.total]]</td>
+                    <td class="pe-4">[[item.payment_method]]</td>
+                    <td class="pe-4">[[item.status]]</td>
+                    <td class="pe-4">[[item.order_at]]</td>
+                    <td class="text-end pe-4">
+                        <a href="#" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="8" class="text-center fst-italic text-muted py-3">
+                        Order is empty!
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+      </section>
+  </div>
+
+{%endblock%}
+
+{%block script%}
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data(){
+                return{
+                    order_list:[]
+                }
+            },
+            mounted(){
+                this.fetchData()
+            },
+            methods:{
+                fetchData(){
+                    let vm = this
+                    axios.get('/admin/order/list')
+                    .then(function (response) {
+                        $("#app").LoadingOverlay("show", {
+                            background  : "#fff"
+                        });
+                        vm.order_list = response.data.orders;
+                        $("#app").LoadingOverlay("hide", true);
+                    })
+                    .catch(function (error) {
+                        // handle error
+                        console.log(error);
+                    })
+                },
+            }
+            
+        }).mount('#app')
+    </script>
+{%endblock%}

@@ -1,0 +1,644 @@
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Vue -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+
+    <script>
+        //Navbar
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPath = window.location.pathname;
+                document.querySelectorAll('.nav-link').forEach(link => {
+                if(link.getAttribute('href') === currentPath){
+                    link.classList.add('active');
+                }
+                });
+            });
+
+        //Vue
+
+        const productsData = {{ products | default([]) | tojson | safe }};
+
+        const {createApp} = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data(){
+                return{
+                    customer:{},
+                    customer_data:{
+                        username:null,
+                        profile:null,
+                    },
+                    form: {
+                        name: '',
+                        email: '',
+                        address: '',
+                        city: '',
+                        country: '',
+                        phone: '',
+                        payment: 'Credit/Debit Card'
+                    },
+                    cart:[],
+                    products:productsData,
+                    product_list:[],
+                    shipping_fee:1.5,
+                    total:0,
+                    loginData: {
+                      email: '',
+                      password: ''
+                    },
+                    registerData:{
+                        username:'',
+                        email:'',
+                        password:'',
+                        confirm_password:'',
+                    },
+                    message: '',
+                    messageType: '',
+                    otpSent:false,
+                    otpVerified:false,
+                    loggedIn: false,
+                    forgotData:{
+                        email: null,
+                        otp:null,
+                        new_password: null,
+                        confirm_password:null,
+                    },
+                    change_pw:{
+                        current_password:null,
+                        new_password:null,
+                        confirm_password:null,
+                    },
+                    order_list:[],
+                    order_details:{},
+                }
+            },
+            computed:{
+                totalPrice(){
+                    return this.cart.reduce((sum,item)=>sum+item.price*item.qty,0);
+                }
+            },
+            methods:{
+                fetchProduct(){
+                    let vm = this;
+                    axios.get('/product/list')
+                    .then(function (response) {
+                        vm.product_list = response.data;
+                    })
+                    .catch(function (error) {
+                        // handle error
+                        console.log(error);
+                    })
+                },
+                async isLoggedIn() {
+                    try {
+                        let vm =this;
+                        loggedIn = false
+                        await axios.get('/auth/check', { withCredentials: true })
+                            .then((res)=> {
+                                loggedIn= res.data.logged_in;
+
+                            })
+                            .catch((err)=> loggIn= false)
+                            return loggedIn
+                    }  catch {
+                        return false;
+                    }
+                },
+                async addToCart(product){
+                     const loggedIn = await this.isLoggedIn(); // ⬅️ use `this.` here
+                    if (!loggedIn) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text: "Please log in first",
+                        }).then(()=>window.location.href = '/login');
+
+                        return;
+                    }
+
+                    if (!product || !product.id) {
+                        console.warn("Invalid product:", product);
+                        return;
+                    }
+                    const existing = this.cart.find(item => item.id ===product.id);
+                    if(existing){
+                        existing.qty +=1;
+                    }else{
+                        this.cart.push({
+                            id:product.id,
+                            name:product.name,
+                            price:product.price,
+                            image:product.image,
+                            qty:1
+                        })
+                    }
+                    Swal.fire({
+                        position: "top-end",
+                        icon: "success",
+                        title: "Product added to cart",
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    localStorage.setItem('cart',JSON.stringify(this.cart))
+                },
+                removeItem(index){
+                    const swalWithBootstrapButtons = Swal.mixin({
+                        customClass: {
+                            confirmButton: "btn btn-success " ,
+                            cancelButton: "btn btn-danger me-2"
+                        },
+                        buttonsStyling: false
+                    });
+                    swalWithBootstrapButtons.fire({
+                        title: "Are you sure?",
+                        text: "You want to remove this product from cart?",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Remove it",
+                        cancelButtonText: "Cancel",
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            swalWithBootstrapButtons.fire({
+                            title: "Deleted!",
+                            text: "Your product has been removed!",
+                            icon: "success"
+                            });
+                            this.cart.splice(index,1)
+                        }
+                    });
+
+                },
+                increaseQty(index){
+                    this.cart[index].qty+=1;
+                },
+                decreaseQty(index){
+                    if(this.cart[index].qty>1){
+                        this.cart[index].qty-=1;
+                    }
+                },
+                async placeOrder(){
+                    try {
+                        if(this.cart.length<1){
+                            Swal.fire({
+                                title: 'Cart is empty!',
+                                text: "Items in cart is empty",
+                                icon: 'error'
+                            });
+                            return;
+                        }
+
+                        Swal.fire({
+                            title: 'Processing your order...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        let response = await fetch('/placeOrder', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                ...this.form,
+                                shipping_fee: this.shipping_fee,
+                                total: this.totalPrice, // use computed totalPrice
+                                cart: this.cart
+                            })
+                        });
+
+                        let result = await response.text();
+
+                        Swal.fire({
+                            title: 'Order Placed!',
+                            text: "Order Success",
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            localStorage.clear()
+                            window.location.href = "/";
+                        });
+
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire({
+                            title: "Error",
+                            text: "Something went wrong. Please try again!",
+                            icon: "error"
+                        });
+                    }
+                },
+                login(){
+                    if(!this.loginData.email || !this.loginData.password){
+                        this.messageType='error'
+                        this.message='Please enter your email address and password!'
+                        return
+                    }
+                    let vm = this;
+                    axios.post('/login',{
+                        email: this.loginData.email,
+                        password: this.loginData.password
+                    }).then((res) => {
+                        if(res.data.login){
+                             axios.get("/me",{withCredentials: true})
+                             .then((res)=>{
+                                this.customer = res.data;
+                                window.location.href="/"
+                             })
+                             .catch(()=>{
+                                this.customer = {};
+                             })
+                        }
+                    }).catch((err) => {
+                        this.messageType='error'
+                        this.message=err.response.data.message
+                    })
+                },
+                logout(){
+                    let vm = this;
+                    axios.get('/logout')
+                    .then((res) => {
+                        vm.loggedIn = false
+                        vm.customer = {};
+                        window.location.href = '/login';
+                    }).catch(() => {
+                        this.customer = {};
+                  });
+                },
+                async sendOTP(){
+                    if(!this.registerData.email){
+                        this.messageType='danger'
+                        this.message='Please enter your email address'
+                        return
+                    }
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                    if(!emailPattern.test(this.registerData.email)){
+                        this.messageType='danger'
+                        this.message='Please enter valid email address'
+                        return
+                    }
+                    try{
+                        Swal.fire({
+                            title: 'Sending verification code...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        const res = await axios.post('/sent-otp',{email:this.registerData.email})
+                        Swal.fire({
+                            title: "Code sent",
+                            text: res.data.message,
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        })
+                        this.messageType = 'success'
+                        this.message = res.data.message
+                        this.otpSent=true
+                    }catch(err){
+                        this.messageType='danger'
+                        this.message=err.response.data.message
+                        Swal.fire({
+                            title: 'Verification failed!',
+                            text: err.response.data.message,
+                            icon: 'error'
+                        })
+                    }
+                },
+                async sendResetOTP(){
+                    if(!this.forgotData.email){
+                        this.messageType='danger'
+                        this.message='Please enter your email address'
+                        return
+                    }
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                    if(!emailPattern.test(this.forgotData.email)){
+                        this.messageType='danger'
+                        this.message='Please enter valid email address'
+                        return
+                    }
+                    try{
+                        Swal.fire({
+                            title: 'Sending verification code...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        const res = await axios.post('/sent-reset-otp',{email:this.forgotData.email})
+                        Swal.fire({
+                            title: "Code sent",
+                            text: res.data.message,
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        })
+                        this.messageType = 'success'
+                        this.message = res.data.message
+                        this.otpSent=true
+                    }catch(err){
+                        this.messageType='danger'
+                        this.message=err.response.data.message
+                        Swal.fire({
+                            title: 'Sending failed!',
+                            text: err.response.data.message,
+                            icon: 'error'
+                        })
+                    }
+                },
+                async verifyOTP(){
+                    try{
+                        Swal.fire({
+                            title: 'Verifying your email...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        const res = await axios.post('/verify-otp',{otp:this.registerData.otp})
+                        Swal.fire({
+                            title: "Verification",
+                            text: res.data.message,
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        })
+
+                        this.messageType = 'success'
+                        this.message = res.data.message
+                    }catch(err){
+                        this.messageType='danger'
+                        this.message=err.response.data.message
+                          Swal.fire({
+                            title: 'Verification failed',
+                            text: err.response.data.message,
+                            icon: 'error'
+                          });
+                    }
+                },
+                async verifyResetOTP(){
+                    try{
+                        Swal.fire({
+                            title: 'Verifying your email...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        const res = await axios.post('/verify-reset-otp',{otp:this.forgotData.otp})
+                        Swal.fire({
+                            title: "Verification",
+                            text: res.data.message,
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        })
+                        this.otpVerified = true
+                        this.messageType = 'success'
+                        this.message = res.data.message
+                    }catch(err){
+                        this.messageType='danger'
+                        this.message=err.response.data.message
+                          Swal.fire({
+                            title: 'Verification failed',
+                            text: err.response.data.message,
+                            icon: 'error'
+                          });
+                    }
+                },
+                async register(){
+                    try{
+                        if(!this.registerData.email || !this.registerData.password||!this.registerData.username||!this.registerData.confirm_password){
+                            this.messageType='danger'
+                            this.message='All fields are required'
+                            return
+                        }
+                        if (this.registerData.password !== this.registerData.confirm_password) {
+                            this.messageType = 'danger';
+                            this.message = 'Passwords do not match';
+                            return;
+                        }
+                        Swal.fire({
+                            title: 'Registering ...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        const res = await axios.post('/register',this.registerData)
+                        this.messageType = 'success'
+                        this.message = res.data.message
+                        Swal.fire({
+                            title: "Register Success",
+                            text: res.data.message,
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "/login"
+                        });
+                    }catch(err){
+                        this.messageType='danger'
+                        this.message=err.response.data.message
+                        Swal.fire({
+                            title: 'Registration failed',
+                            text: err.response.data.message,
+                            icon: 'error'
+                      });
+                    }
+                },
+                async resetPassword(){
+                    if (!this.otpVerified) {
+                      this.messageType = 'danger'
+                      this.message = 'Please verify OTP first'
+                      return
+                    }
+                    if (this.forgotData.new_password !== this.forgotData.confirm_password) {
+                        this.messageType = 'danger'
+                        this.message = 'Passwords do not match'
+                        return
+                    }
+                    try{
+                        Swal.fire({
+                            title: 'Resetting password ...',
+                            text: 'Please wait a moment',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        const res = await axios.post('/reset-password',{
+                            email:this.forgotData.email,
+                            password:this.forgotData.new_password
+                        })
+                        this.messageType = 'success'
+                        this.message = res.data.message
+                        Swal.fire({
+                            title: "Resetting password success",
+                            text: res.data.message,
+                            icon: "success",
+                            allowOutsideClick: false,
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "/login"
+                        });
+
+                    }catch(err){
+                        this.messageType='danger'
+                        this.message=err.response.data.message
+                        Swal.fire({
+                            title: 'Resetting password failed',
+                            text: err.response.data.message,
+                            icon: 'error'
+                      });
+                    }
+                },
+                onFileChange(e){
+                    this.customer_data.profile = e.target.files[0] || null;
+                },
+                async update_profile(){
+                    if(!this.customer_data.username
+                        && !this.customer_data.profile){
+                        return
+                    }
+                    let payload = new FormData();
+                    payload.append("id",this.customer.id)
+                    payload.append("username",this.customer_data.username)
+                    payload.append("profile",this.customer_data.profile)
+                    payload.append("old_profile",this.customer.profile)
+                    try{
+                        Swal.fire({
+                          title: "Are you sure?",
+                          text: "You won't be able to revert this!",
+                          icon: "warning",
+                          showCancelButton: true,
+                          confirmButtonColor: "#3085d6",
+                          cancelButtonColor: "#d33",
+                          confirmButtonText: "Yes, update it!"
+                        }).then(async(result) => {
+                            if (result.isConfirmed) {
+                                const res = await axios.post(
+                                                                '/update-profile',
+                                                                payload,
+                                                                {
+                                                                    headers: {
+                                                                        'Content-Type': 'multipart/form-data'
+                                                                    },
+                                                                    withCredentials: true
+                                                                }
+                                                            )
+                                Swal.fire({
+                                    title: "Update Success!",
+                                    text: "Your profile has been updated!",
+                                    icon: "success"
+                                }).then(()=>window.location.href = "/profile");
+                          }
+                        });
+                    }catch(err){
+                        Swal.fire({
+                            title: 'Update Failed',
+                            text: err.response.data.message,
+                            icon: 'error'
+                        });
+                    }
+                },
+                async update_password(){
+                    if(!this.change_pw.current_password || !this.change_pw.new_password || !this.change_pw.confirm_password)
+                        return
+                    if(this.change_pw.new_password !== this.change_pw.confirm_password){
+                        Swal.fire({
+                            title: 'Error',
+                            text: "Passwords do not match.",
+                            icon: 'error'
+                        });
+                        return
+                    }
+
+                        Swal.fire({
+                          title: "Are you sure?",
+                          text: "You won't be able to revert this!",
+                          icon: "warning",
+                          showCancelButton: true,
+                          confirmButtonColor: "#3085d6",
+                          cancelButtonColor: "#d33",
+                          confirmButtonText: "Yes, update it!"
+                        }).then(async(result) => {
+                            if (result.isConfirmed) {
+                                try{
+                                    const res = await axios.post(
+                                                                    "/update-password",{
+                                                                    id:this.customer.id,
+                                                                    current_password: this.change_pw.current_password,
+                                                                    new_password: this.change_pw.new_password
+                                    });
+                                    console.log(res);
+                                    Swal.fire({
+                                        title: "Update Success!",
+                                        text: "Your Password has been updated!",
+                                        icon: "success"
+                                    }).then(()=>window.location.href = "/profile");
+                                }catch(err){
+                                    console.log(err)
+                                    Swal.fire({
+                                        title: 'Update Password Failed',
+                                        text: err.response.data.message,
+                                        icon: 'error'
+                                });
+                            }
+                          }
+                        });
+
+                },
+                async order_history(){
+                    try{
+                        const res = await axios.get("/order-history")
+                        this.order_list = res.data.orders;
+                    }catch(err){
+                        console.log(err)
+                    }
+                },
+                async view_order_detail(id){
+                    this.order_details ={}
+                    modal = new bootstrap.Modal(document.getElementById('orderDetailModal'))
+                    modal.show()
+                    try{
+                        const res = await axios.get(`/order_detail/${id}`)
+                        this.order_details = res.data;
+                    }catch(err){
+                        console.log(err)
+                    }
+                },
+            },
+            watch:{
+                cart:{
+                    handler(newCart){
+                        localStorage.setItem('cart',JSON.stringify(newCart));
+                        this.total = this.totalPrice;
+                    },
+                    deep:true
+                }
+            },
+            mounted(){
+                let cart = JSON.parse(localStorage.getItem('cart')??'[]')
+                this.cart = cart
+                this.fetchProduct()
+                this.isLoggedIn()
+                axios.get('/me', { withCredentials: true })
+                .then(res => this.customer = res.data)
+                .catch(() => this.customer = {});
+            }
+        }).mount("#app");
+    </script>

@@ -1,0 +1,74 @@
+{% extends "/admin/master.html" %}
+{%block content%}
+
+  <div class="content-wrapper" id="app">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Dashboard</h1>
+          </div>
+        
+        </div>
+      </div>
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+		<div class="container-fluid">
+            <div class="row">
+
+                <!-- Dashboard Card -->
+                {% include '/admin/dashboard/dashboard_card.html' %}
+                <!-- End Dashboard Card -->
+
+                <!-- Latest Order -->
+                {% include '/admin/dashboard/recent_order.html' %}
+                <!-- End Latest Order -->
+
+                <!-- Info Box -->
+                {% include '/admin/dashboard/info_box.html' %}
+                <!-- End Info Box -->
+
+           </div>
+		</div>
+    </section>
+    <!-- /.content -->
+  </div>
+
+{%endblock%}
+{%block script%}
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data(){
+                return{
+                    item_list: {}
+                }
+            },
+            mounted(){
+                this.fetchData()
+            },
+            methods:{
+                fetchData(){
+                    let vm =this
+                    $("#app").LoadingOverlay("show", {
+                            background  : "#fff"
+                    });
+                    axios.get('/admin/dashboard/list')
+                    .then(function (response) {
+                        vm.item_list = response.data;
+                        $("#app").LoadingOverlay("hide", true);
+                    })
+                    .catch(function (error) {
+                        // handle error
+
+                    })
+                },
+            }
+        }).mount('#app')
+    </script>
+{%endblock%}
